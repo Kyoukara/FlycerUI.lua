@@ -1400,41 +1400,49 @@ function FlycerUI:CreateWindow(config)
 	-- FADE EXEMPT SYSTEM
 	-- ════════════════════════════════════════════════════════
 
-	local _tabFadeExempt = {}
-	local function markFadeExempt(instance)
-		_tabFadeExempt[instance] = true
-	end
-	local function isFadeExempt(instance)
-		return _tabFadeExempt[instance] == true
-	end
+	-- ── Viewport resize handler ──────────────────────────
 
-	-- ════════════════════════════════════════════════════════
-	-- VIEWPORT RESIZE HANDLER (forward declares)
-	-- ════════════════════════════════════════════════════════
+		local _lastVP = Vector2.new(0, 0)
+		local _vpConnection = nil
 
-	local ExtraFrame = nil
-	local ToggleFrame = nil
-	local DragBar = nil
-	local DragBarHitbox = nil
-	local _lastVP = Vector2.new(0, 0)
-	local _vpConnection = nil
+		-- Forward-declare so onViewportChanged can reference them
+		local ExtraFrame = nil
+		local ToggleFrame = nil
+		local DragBar = nil
+		local DragBarHitbox = nil
 
-	local function onViewportChanged()
-		local vp = Camera.ViewportSize
-		if math.abs(vp.X - _lastVP.X) < 2 and math.abs(vp.Y - _lastVP.Y) < 2 then return end
-		_lastVP = vp
-		if MainFrame and MainFrame.Parent then
-			MainFrame.Position = getScreenCenter(MainFrame.AbsoluteSize.X, MainFrame.AbsoluteSize.Y)
+		local function onViewportChanged()
+			local vp = Camera.ViewportSize
+			if math.abs(vp.X - _lastVP.X) < 2 and math.abs(vp.Y - _lastVP.Y) < 2 then
+				return
+			end
+			_lastVP = vp
+			if MainFrame and MainFrame.Parent then
+				MainFrame.Position = getScreenCenter(MainFrame.AbsoluteSize.X, MainFrame.AbsoluteSize.Y)
+			end
+			if ToggleFrame and ToggleFrame.Parent then
+				ToggleFrame.Position = getCenteredTogglePos(MainFrame.AbsoluteSize.Y)
+			end
 		end
-		if ToggleFrame and ToggleFrame.Parent then
-			ToggleFrame.Position = getCenteredTogglePos(MainFrame.AbsoluteSize.Y)
-		end
-	end
 
-	_vpConnection = Camera:GetPropertyChangedSignal("ViewportSize"):Connect(onViewportChanged)
-	MainGui.Destroying:Connect(function()
-		if _vpConnection then _vpConnection:Disconnect(); _vpConnection = nil end
-	end)
+		_vpConnection = Camera:GetPropertyChangedSignal("ViewportSize"):Connect(onViewportChanged)
+		MainGui.Destroying:Connect(function()
+			if _vpConnection then
+				_vpConnection:Disconnect()
+				_vpConnection = nil
+			end
+		end)
+
+		local _tabFadeExempt = {}
+		local function markFadeExempt(instance)
+			_tabFadeExempt[instance] = true
+		end
+		local function isFadeExempt(instance, forToggle)
+			if forToggle then
+				return false
+			end
+			return _tabFadeExempt[instance] == true
+		end
 
 	-- ════════════════════════════════════════════════════════
 	-- HEADER
